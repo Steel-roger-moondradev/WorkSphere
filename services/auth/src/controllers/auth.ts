@@ -55,7 +55,7 @@ export const registerUser = TryCatch(async (req, res) => {
     userObject = user;
   }
   if (userObject) {
-    const secret = process.env.JWT_SEC as string;
+    const secret = process.env.JWT_SECRET as string;
 
     const payload = {
       id: userObject.user_id,
