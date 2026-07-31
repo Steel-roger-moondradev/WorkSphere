@@ -33,7 +33,7 @@ export const isAuth =async(req:authenticatedRequest,res:Response,next:NextFuncti
         const token=authHeader?.split(" ")[1];
         const decodePayload=jwt.verify(
             token as string,
-            process.env.JWT_SEC as string,
+            process.env.JWT_SECRET as string,
         ) as JwtPayload;
 
         if(!decodePayload){
