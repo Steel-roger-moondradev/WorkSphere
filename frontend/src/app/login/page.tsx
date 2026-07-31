@@ -1,14 +1,14 @@
 "use client";
 
 import { useappdata } from "@/context/AppContext";
-import { useEffect, useState} from "react";
-import {auth_service} from "../../context/AppContext"
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { auth_service } from "../../context/AppContext";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { LoginResponse } from "@/type";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail,Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,58 +16,58 @@ import axios from "axios";
 
 const login = () => {
   const router = useRouter();
-  const[email,setEmail]=useState("");
-  const[password,setPassword]=useState("");
-  const[btnLoading,setBtnloading]=useState(false);
-  const{        user,
-                loading,
-                isAuth,
-                setUser,
-                setIsAuth}=useappdata();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [btnLoading, setBtnloading] = useState(false);
+  const { user, loading, isAuth, setUser, setIsAuth } = useappdata();
 
   useEffect(() => {
     if (loading) return;
     if (isAuth) {
-      router.replace('/');
+      router.replace("/");
     }
   }, [loading, isAuth, router]);
 
-  const submitHandler=async (e:React.FormEvent<HTMLFormElement>)=>{
+  const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBtnloading(true);
-   if(isAuth){
-        router.push('/');
-      return;}
-    try{
-      const {data}= await axios.post<LoginResponse>(`${auth_service}/api/auth/login`,{email,password});
-      if (!data || !data.token || !data.userObject) {
-  throw new Error("Invalid response");
-}
-      toast.success(data.message);
-     Cookies.set("token", data.token, {
-          secure: true,
-          expires: 15, 
-          path: "/",
-        });
-      setUser(data.userObject);
-      setIsAuth(true);  
-      router.push('/');
+    if (isAuth) {
+      router.push("/");
+      return;
     }
-    catch(error:any){
-      toast.error(error.response?.data?.message||"Login Failed");
+    try {
+      const { data } = await axios.post<LoginResponse>(
+        `${auth_service}/api/auth/login`,
+        { email, password },
+        {
+          withCredentials: true,
+        },
+      );
+      if (!data || !data.accessToken || !data.userObject) {
+        throw new Error("Invalid response");
+      }
+      toast.success(data.message);
+      Cookies.set("accessToken", data.accessToken, {
+        secure: true,
+        expires: 15,
+        path: "/",
+      });
+      setUser(data.userObject);
+      setIsAuth(true);
+      router.push("/");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login Failed");
       setIsAuth(false);
-    } finally{
+    } finally {
       setBtnloading(false);
     }
-  }
-  
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-background via-background to-muted/40 text-foreground px-4">
-      
       {/* Animated Card */}
       <Card className="w-full max-w-md shadow-xl rounded-2xl transition-all duration-500 hover:scale-[1.02] bg-background/80 border border-border/60 backdrop-blur-md">
         <CardContent className="p-6 space-y-6">
-
           {/* Heading */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
@@ -78,7 +78,6 @@ const login = () => {
 
           {/* Form */}
           <form onSubmit={submitHandler} className="space-y-4">
-
             {/* Email */}
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -138,7 +137,7 @@ const login = () => {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default login
+export default login;

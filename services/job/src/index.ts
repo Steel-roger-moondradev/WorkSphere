@@ -1,11 +1,11 @@
 import app from "./app.js";
-import sql from './utils/db.js'
-import dotenv from 'dotenv'
+import sql from "./utils/db.js";
+import dotenv from "dotenv";
 dotenv.config();
 
-async function initDB(){
-    try{
-        await sql`
+async function initDB() {
+  try {
+    await sql`
         DO $$
         BEGIN
             IF NOT EXISTS(SELECT 1 FROM pg_type WHERE typname='job_type')
@@ -19,7 +19,7 @@ async function initDB(){
             END IF;
         END$$;
         `;
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS companies(
         company_id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
@@ -31,8 +31,8 @@ async function initDB(){
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
         `;
-        
-        await sql`
+
+    await sql`
         CREATE TABLE IF NOT EXISTS jobs(
         job_id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -49,7 +49,7 @@ async function initDB(){
         is_active BOOLEAN DEFAULT true
         )
         `;
-        await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS applications(
         application_id SERIAL PRIMARY KEY,
         job_id INTEGER NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,
@@ -63,29 +63,34 @@ async function initDB(){
         )
         `;
 
-        // Enables fast ILIKE matching on job title/location for search filters.
-        await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
+    // Enables fast ILIKE matching on job title/location for search filters.
+    await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
 
-        await sql`CREATE INDEX IF NOT EXISTS idx_companies_recruiter_id ON companies(recruiter_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_companies_name_recruiter_id ON companies(name, recruiter_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_companies_recruiter_id ON companies(recruiter_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_companies_name_recruiter_id ON companies(name, recruiter_id)`;
 
-        await sql`CREATE INDEX IF NOT EXISTS idx_jobs_active_created_at ON jobs(is_active, created_at DESC)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_jobs_company_id ON jobs(company_id)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON jobs USING GIN (title gin_trgm_ops)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_jobs_location_trgm ON jobs USING GIN (location gin_trgm_ops)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_jobs_active_created_at ON jobs(is_active, created_at DESC)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_jobs_company_id ON jobs(company_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON jobs USING GIN (title gin_trgm_ops)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_jobs_location_trgm ON jobs USING GIN (location gin_trgm_ops)`;
 
-        await sql`CREATE INDEX IF NOT EXISTS idx_applications_job_subscribed_applied ON applications(job_id, subscribed DESC, applied_at ASC)`;
-        await sql`CREATE INDEX IF NOT EXISTS idx_applications_applicant_id ON applications(applicant_id)`;
-        console.log("✅ Database is created/checked");
-    }
-    catch(error:any){
-        console.log("❌ Error in database");
-         console.error(error);
-        process.exit(1);
-    }
+    await sql`CREATE INDEX IF NOT EXISTS idx_applications_job_subscribed_applied ON applications(job_id, subscribed DESC, applied_at ASC)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_applications_applicant_id ON applications(applicant_id)`;
+    console.log("✅ Database is created/checked");
+  } catch (error: any) {
+    console.log("❌ Error in database");
+    console.error(error);
+    process.exit(1);
+  }
 }
-    initDB().then(()=> app.listen(process.env.PORT,()=>{
-    console.log(`JOB server is listening on http://localhost:${process.env.PORT}`);
-})).catch((err)=>{
+initDB()
+  .then(() =>
+    app.listen(process.env.PORT, () => {
+      console.log(
+        `JOB server is listening on http://localhost:${process.env.PORT}`,
+      );
+    }),
+  )
+  .catch((err) => {
     console.log(err);
-})
+  });

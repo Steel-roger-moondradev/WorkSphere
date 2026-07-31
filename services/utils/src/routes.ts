@@ -1,41 +1,49 @@
-import express from 'express'
-import { v2 as cloudinary } from 'cloudinary'
-import dotenv from 'dotenv'
-dotenv.config()
-
-const route=express.Router();
-
-route.post("/upload",async(req,res)=>{
-   
-   try{
-    const {buffer,public_id}=req.body;
-    if(public_id){
-        await cloudinary.uploader.destroy(buffer);
-    }
-    const cloud =await cloudinary.uploader.upload(buffer);
-
-    res.json({
-        url:cloud.secure_url,
-        public_id:cloud.public_id,
-    })
-   } catch(error:any){
-        res.status(500).json({
-            message:error.message,
-        })
-   }
-    
-})
-
+import express from "express";
+import { v2 as cloudinary } from "cloudinary";
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+dotenv.config();
 
-const ai = new GoogleGenAI({apiKey:process.env.GEMINI_API_KEY});
+const route = express.Router();
+if (process.env.NODE_ENV === "production") {
+  route.post("/upload", (req, res) => {
+    res.status(200).json({
+      message: "Upload route is not available in production mode",
+    });
+  });
+  route.post("/resume-analyzer", (req, res) => {
+    res.status(200).json({
+      message: "Resume analyzer route is not available in production mode",
+    });
+  });
+} else {
+  route.post("/upload", async (req, res) => {
+    try {
+      const { buffer, public_id } = req.body;
+      if (public_id) {
+        await cloudinary.uploader.destroy(buffer);
+      }
+      const cloud = await cloudinary.uploader.upload(buffer);
 
-route.post("/carrer",async(req,res)=>{
-    let {skills}=req.body;
-    if(!skills){
-        throw Error("Skills not found");
+      res.json({
+        url: cloud.secure_url,
+        public_id: cloud.public_id,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+      });
     }
-const prompt = `
+  });
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+  route.post("/carrer", async (req, res) => {
+    let { skills } = req.body;
+    if (!skills) {
+      throw Error("Skills not found");
+    }
+    const prompt = `
 Based on the following skills: ${skills}.
 Please act as a career advisor and generate a career path suggestion.
 Your entire response must be in a valid JSON format. Do not include any text or markdown
@@ -71,41 +79,42 @@ Mastery', 'DevOps & Cloud').",
 }
 `;
     let jsonResponse;
-try{
-    const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt
-  });
-  try{
-    const rawtext=response.text?.replace(/```json/g,"").replace(/```/g,"").trim();
-    if(!rawtext){
-        throw Error("Ai is not able to produce valid response");
-    }
-    jsonResponse=JSON.parse(rawtext);
-    res.json(jsonResponse)
-}
-
-catch(error:any){
-    return res.status(500).json({
-         message:"AI return response that was not valid",
-         response:response.text
-    });
-}}
-catch(error:any){
-    res.status(400).json({
-        message:error.message
-    })
-}
-})
-
-route.post("/resume-analyzer",async(req,res)=>{
-    const{pdfbase64}=req.body;
-    if(!pdfbase64){
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+      try {
+        const rawtext = response.text
+          ?.replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+        if (!rawtext) {
+          throw Error("Ai is not able to produce valid response");
+        }
+        jsonResponse = JSON.parse(rawtext);
+        res.json(jsonResponse);
+      } catch (error: any) {
         return res.status(500).json({
-            message:"Pdf is not found",
-        })
+          message: "AI return response that was not valid",
+          response: response.text,
+        });
+      }
+    } catch (error: any) {
+      res.status(400).json({
+        message: error.message,
+      });
     }
-    const prompt=`
+  });
+
+  route.post("/resume-analyzer", async (req, res) => {
+    const { pdfbase64 } = req.body;
+    if (!pdfbase64) {
+      return res.status(500).json({
+        message: "Pdf is not found",
+      });
+    }
+    const prompt = `
 You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume
 and provide:
 1. An ATS compatibility score (0-100)
@@ -158,44 +167,48 @@ Focus on:
 - Use of action verbs and quantifiable achievements
 - Section organization and flow
 `;
-try{
-    const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents:[{
-        role: "user",
-        parts:[{
-            text:prompt,
-        },
-        {
-            inlineData:{
-                mimeType:"application/pdf",
-                data:pdfbase64.replace(/^data:application\/pdf:base64,/,""),
-            }
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: prompt,
+              },
+              {
+                inlineData: {
+                  mimeType: "application/pdf",
+                  data: pdfbase64.replace(/^data:application\/pdf:base64,/, ""),
+                },
+              },
+            ],
+          },
+        ],
+      });
+      let jsonResponse;
+      try {
+        const rawtext = response.text
+          ?.replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+        if (!rawtext) {
+          throw Error("Ai is not able to produce valid response");
         }
-    ]
-    }]
-  });
-  let jsonResponse;
-  try{
-    const rawtext=response.text?.replace(/```json/g,"").replace(/```/g,"").trim();
-    if(!rawtext){
-        throw Error("Ai is not able to produce valid response");
+        jsonResponse = JSON.parse(rawtext);
+        res.json(jsonResponse);
+      } catch (error: any) {
+        return res.status(500).json({
+          message: "AI return response that was not valid",
+          response: response.text,
+        });
+      }
+    } catch (error: any) {
+      res.status(400).json({
+        message: error.message,
+      });
     }
-    jsonResponse=JSON.parse(rawtext);
-    res.json(jsonResponse)
+  });
 }
-
-catch(error:any){
-    return res.status(500).json({
-         message:"AI return response that was not valid",
-         response:response.text
-    });
-}}
-catch(error:any){
-    res.status(400).json({
-        message:error.message
-    })
-}
-
-})
 export default route;

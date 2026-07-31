@@ -1,5 +1,5 @@
 export const applicationStatusUpdateTemplate = (jobTitle: string) => {
-return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>

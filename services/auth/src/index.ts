@@ -1,20 +1,12 @@
-import app from './app.js'
-import dotenv from 'dotenv'
-import sql from './utils/db.js';
- import  { createClient } from 'redis'
+import app from "./app.js";
+import dotenv from "dotenv";
+import sql from "./utils/db.js";
 
 dotenv.config();
-  export const redisClient=createClient({
-      url:process.env.REDIS_URL,
- })
 
-  redisClient.connect().then(()=>{console.log("redis is connected")}).catch((error:any)=>{
-  console.log("Redis is not connected ",error);
-  })
-
-async function initdb(){
-    try{
-        await sql`
+async function initdb() {
+  try {
+    await sql`
     DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname ='user_role') THEN
@@ -23,7 +15,7 @@ async function initdb(){
     END$$;
     `;
 
-    await sql `
+    await sql`
     CREATE TABLE IF NOT EXISTS users(
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -56,20 +48,20 @@ async function initdb(){
     )
     `;
 
-
-     console.log("✅ Database created/checked");
-    }
-    catch(error){
-        console.log("❌ Error in database initialization",error);
-    }
-    
+    console.log("✅ Database created/checked");
+  } catch (error) {
+    console.log("❌ Error in database initialization", error);
+  }
 }
-    
 
-    initdb().then(()=> app.listen(process.env.PORT,()=>{
-    console.log(`Auth server is listening on http://localhost:${process.env.PORT}`);
-})).catch((err)=>{
+initdb()
+  .then(() =>
+    app.listen(process.env.PORT, () => {
+      console.log(
+        `Auth server is listening on http://localhost:${process.env.PORT}`,
+      );
+    }),
+  )
+  .catch((err) => {
     console.log(err);
-})
-   
-
+  });
