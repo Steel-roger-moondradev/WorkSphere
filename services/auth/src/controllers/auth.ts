@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 import getBuffer from "../utils/buffer.js";
 import axios from "axios";
 import jwt, { JwtPayload } from "jsonwebtoken";
-// import { publishToProducer } from "../producer.js";
 import { forgotPasswordTemplate } from "../utils/forgotpassword.js";
 import { connection } from "../utils/redis.js";
 import { emailQueue } from "../utils/queue.js";
@@ -98,40 +97,20 @@ export const loginUser = TryCatch(async (req, res) => {
   delete userObject.password;
   userObject.skills = userObject.skills || [];
 
-  const payload = {
-    id: userObject.user_id,
-  };
-
-  const accessToken = jwt.sign(
-    payload,
-    process.env.JWT_ACCESS_SECRET as string,
-    { expiresIn: "15m" },
+  const token = jwt.sign(
+    {
+      id: userObject.user_id,
+    },
+    process.env.JWT_SECRET as string,
+    {
+      expiresIn: "1d",
+    },
   );
 
-  const refreshToken = jwt.sign(
-    payload,
-    process.env.JWT_REFRESH_SECRET as string,
-    { expiresIn: "30d" },
-  );
-
-  await connection.set(
-    `refresh:${userObject.user_id}`,
-    refreshToken,
-    "EX",
-    60 * 60 * 24 * 30,
-  );
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-  });
-
-  res.json({
+  return res.status(200).json({
     message: "User logged in",
     userObject,
-    accessToken,
+    token,
   });
 });
 

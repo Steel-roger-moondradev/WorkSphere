@@ -1,6 +1,7 @@
 import app from "./app.js";
 import sql from "./utils/db.js";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
 async function initDB() {
@@ -83,6 +84,14 @@ async function initDB() {
     process.exit(1);
   }
 }
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
+
 initDB()
   .then(() =>
     app.listen(process.env.PORT, () => {

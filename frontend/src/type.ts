@@ -97,7 +97,7 @@ export interface AppProviderProps {
 export interface LoginResponse {
   message: string;
   userObject: User;
-  accessToken: string;
+  token: string;
 }
 export interface InfoProps {
   user: User | null;

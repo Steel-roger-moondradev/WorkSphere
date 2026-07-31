@@ -43,11 +43,11 @@ const login = () => {
           withCredentials: true,
         },
       );
-      if (!data || !data.accessToken || !data.userObject) {
+      if (!data || !data.token || !data.userObject) {
         throw new Error("Invalid response");
       }
       toast.success(data.message);
-      Cookies.set("accessToken", data.accessToken, {
+      Cookies.set("token", data.token, {
         secure: true,
         expires: 15,
         path: "/",
