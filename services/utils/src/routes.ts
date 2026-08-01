@@ -1,12 +1,13 @@
 import express from "express";
 import { v2 as cloudinary } from "cloudinary";
 import { GoogleGenAI } from "@google/genai";
+import { Request, Response } from "express";
 import dotenv from "dotenv";
 dotenv.config();
 
 const route = express.Router();
 
-route.post("/upload", async (req, res) => {
+route.post("/upload", async (req: Request, res: Response) => {
   console.log("req.body that we have is :", req.body);
   try {
     const { buffer, public_id } = req.body;
@@ -27,12 +28,12 @@ route.post("/upload", async (req, res) => {
 });
 
 if (process.env.NODE_ENV === "production") {
-  route.post("/resume-analyzer", (req, res) => {
+  route.post("/resume-analyzer", (req: Request, res: Response) => {
     res.status(200).json({
       message: "Resume analyzer route is not available in production mode",
     });
   });
-  route.post("/carrer", (req, res) => {
+  route.post("/carrer", (req: Request, res: Response) => {
     res.status(200).json({
       message: "Career route is not available in production mode",
     });
@@ -40,7 +41,7 @@ if (process.env.NODE_ENV === "production") {
 } else {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-  route.post("/carrer", async (req, res) => {
+  route.post("/carrer", async (req: Request, res: Response) => {
     let { skills } = req.body;
     if (!skills) {
       return res.status(400).json({
@@ -111,7 +112,7 @@ Mastery', 'DevOps & Cloud').",
     }
   });
 
-  route.post("/resume-analyzer", async (req, res) => {
+  route.post("/resume-analyzer", async (req: Request, res: Response) => {
     const { pdfbase64 } = req.body;
     if (!pdfbase64) {
       return res.status(500).json({

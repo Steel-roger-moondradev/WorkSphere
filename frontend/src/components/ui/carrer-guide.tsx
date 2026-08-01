@@ -10,6 +10,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+
 import React, { useState } from "react";
 import { Button } from "./button";
 import {
@@ -78,7 +79,6 @@ const CarrerGuide = () => {
       });
 
       setResponse(data);
-
       setResult(true);
       toast.success(data?.message || "Carrer guidance generated");
     } catch (error: any) {
