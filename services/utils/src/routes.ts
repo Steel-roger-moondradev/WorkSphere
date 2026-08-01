@@ -5,43 +5,47 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const route = express.Router();
-if (process.env.NODE_ENV === "production") {
-  route.post("/upload", (req, res) => {
-    res.status(200).json({
-      message: "Upload route is not available in production mode",
+
+route.post("/upload", async (req, res) => {
+  console.log("req.body that we have is :", req.body);
+  try {
+    const { buffer, public_id } = req.body;
+    if (public_id) {
+      await cloudinary.uploader.destroy(buffer);
+    }
+    const cloud = await cloudinary.uploader.upload(buffer);
+
+    res.json({
+      url: cloud.secure_url,
+      public_id: cloud.public_id,
     });
-  });
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+if (process.env.NODE_ENV === "production") {
   route.post("/resume-analyzer", (req, res) => {
     res.status(200).json({
       message: "Resume analyzer route is not available in production mode",
     });
   });
-} else {
-  route.post("/upload", async (req, res) => {
-    try {
-      const { buffer, public_id } = req.body;
-      if (public_id) {
-        await cloudinary.uploader.destroy(buffer);
-      }
-      const cloud = await cloudinary.uploader.upload(buffer);
-
-      res.json({
-        url: cloud.secure_url,
-        public_id: cloud.public_id,
-      });
-    } catch (error: any) {
-      res.status(500).json({
-        message: error.message,
-      });
-    }
+  route.post("/carrer", (req, res) => {
+    res.status(200).json({
+      message: "Career route is not available in production mode",
+    });
   });
-
+} else {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   route.post("/carrer", async (req, res) => {
     let { skills } = req.body;
     if (!skills) {
-      throw Error("Skills not found");
+      return res.status(400).json({
+        message: "Skills not found",
+      });
     }
     const prompt = `
 Based on the following skills: ${skills}.
@@ -180,7 +184,7 @@ Focus on:
               {
                 inlineData: {
                   mimeType: "application/pdf",
-                  data: pdfbase64.replace(/^data:application\/pdf:base64,/, ""),
+                  data: pdfbase64.replace(/^data:application\/pdf;base64,/, ""),
                 },
               },
             ],

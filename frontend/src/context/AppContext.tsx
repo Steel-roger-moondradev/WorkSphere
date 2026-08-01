@@ -67,6 +67,10 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setBtnloading(true);
     try {
       const token = Cookies.get("token");
+      if (!token) {
+        toast.error("Authentication is required");
+        return;
+      }
       const { data } = await axios.put<LoginResponse>(
         `${user_service}/api/user/update/pic`,
         formData,
